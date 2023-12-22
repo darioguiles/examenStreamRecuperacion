@@ -3,6 +3,7 @@ package org.iesvdm.tienda.modelo;
 import java.math.*;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
+import java.time.Year;
 import java.util.*;
 import static java.util.stream.Collectors.*;
 import static java.util.Comparator.*;
@@ -90,8 +91,12 @@ public class TestExamenRecuperacionStream {
 
             List<Pedido> list = pedidoHome.findAll();
 
-            //TODO STREAMS
+            var lista = list.stream()
+                    .filter(p -> p.getEstado()!=null)
+                    .map(f -> "Tipo pedido : " + f.getEstado())
+                    .collect(toUnmodifiableSet());
 
+            lista.forEach(System.out::println);
 
             pedidoHome.commitTransaction();
         } catch (RuntimeException e) {
@@ -115,7 +120,23 @@ public class TestExamenRecuperacionStream {
 
             List<Cliente> list = clienteHome.findAll();
 
+            SimpleDateFormat formateador = new SimpleDateFormat("yyyy-MM-dd");
+            final Date fin2008;
+            final Date inicio2008;
+            try {
+                fin2008 = formateador.parse("2008-12-31");
+                inicio2008 = formateador.parse("2008-01-01");
+            } catch (ParseException e) {
+                throw new RuntimeException(e);
+            }
+
             //TODO STREAMS
+
+            var lista = list.stream().filter(f -> f.getPagos().stream().anyMatch( p -> p!=null && p.getFechaPago().before(fin2008) && p.getFechaPago().after(inicio2008)))
+                    .map(c ->"Codigo Cliente: " + c.getCodigoCliente() )
+                    .collect(toUnmodifiableSet());
+
+           lista.forEach(System.out::println);
 
 
             clienteHome.commitTransaction();
@@ -206,7 +227,24 @@ public class TestExamenRecuperacionStream {
 
             List<Pago> list = pagoHome.findAll();
 
+            SimpleDateFormat formateador = new SimpleDateFormat("yyyy-MM-dd");
+            final Date fin2008;
+            final Date inicio2008;
+            try {
+                fin2008 = formateador.parse("2008-12-31");
+                inicio2008 = formateador.parse("2008-01-01");
+            } catch (ParseException e) {
+                throw new RuntimeException(e);
+            }
             //TODO STREAMS
+
+            var lista = list.stream()
+                    .filter(p -> p.getFechaPago().before(fin2008) && p.getFechaPago().after(inicio2008))
+                    .sorted(comparing(Pago::getTotal).reversed())
+                    .map(f -> "Pago: " + f.getFormaPago() + " Importe: " + f.getTotal() + " Fecha: " + f.getFechaPago());
+
+            lista.forEach(System.out::println);
+
 
 
             pagoHome.commitTransaction();
@@ -231,6 +269,15 @@ public class TestExamenRecuperacionStream {
 
             //TODO STREAMS
 
+            var lista = list.stream()
+                            .filter(c -> c.getPagos()!=null && c.getRegion() != null)
+                                            .map(p -> "Regiones de clientes con pagos: " + p.getRegion())
+                                                .collect(toUnmodifiableSet())
+                                                    .stream().sorted(comparing(String::valueOf));
+
+            lista.forEach(System.out::println);
+
+
             clienteHome.commitTransaction();
         } catch (RuntimeException e) {
             e.printStackTrace();
@@ -251,9 +298,12 @@ public class TestExamenRecuperacionStream {
             clienteHome.beginTransaction();
 
             List<Cliente> list = clienteHome.findAll();
-
             //TODO STREAMS
+            var lista = list.stream()
+                    .filter(c -> c.getCiudad().equals("Madrid") && c.getPais().equals("Spain"))
+                    .count();
 
+            System.out.println("Hay: " + lista + " clientes con domicilio en Madrid (ciudad)");
 
             clienteHome.commitTransaction();
         } catch (RuntimeException e) {
